@@ -1,68 +1,87 @@
+DROP PROCEDURE IF EXISTS popular_frota;
+
 DELIMITER $$
 
 CREATE PROCEDURE popular_frota()
 BEGIN
     DECLARE i INT DEFAULT 1;
 
-    -- 1. Usuarios
+    -- 🔴 Desativa verificação de FK
+    SET FOREIGN_KEY_CHECKS = 0;
+
+    -- 🔴 Limpa tabelas (ordem não importa com FK desativada)
+    TRUNCATE TABLE tb_viagem;
+    TRUNCATE TABLE tb_manutencao;
+    TRUNCATE TABLE tb_frota;
+    TRUNCATE TABLE tb_veiculo;
+    TRUNCATE TABLE tb_tecnico;
+    TRUNCATE TABLE tb_usuario;
+    TRUNCATE TABLE tb_estacionamento;
+
+    -- 🔴 Ativa novamente FK
+    SET FOREIGN_KEY_CHECKS = 1;
+
+    -- 1️⃣ USUÁRIOS
     WHILE i <= 1000 DO
-        INSERT INTO usuario (nome, CPF, email, saldo, score)
+        INSERT INTO tb_usuario (nome, cpf, email, saldo_carteira, score)
         VALUES (
             CONCAT('Usuario_', i),
-            FLOOR(10000000000 + RAND()*89999999999),
+            LPAD(i,11,'0'),
             CONCAT('user', i, '@email.com'),
             ROUND(RAND()*500,2),
-            ROUND(RAND()*5,2)
+            ROUND(RAND()*100,2)
         );
         SET i = i + 1;
     END WHILE;
 
     SET i = 1;
 
-    -- 2. Estacionamento
+    -- 2️⃣ ESTACIONAMENTOS
     WHILE i <= 50 DO
-        INSERT INTO estacionamento (nome, local, capacidade)
+        INSERT INTO tb_estacionamento (nome, capacidade, local)
         VALUES (
             CONCAT('Estac_', i),
-            CONCAT('Local_', i),
-            FLOOR(50 + RAND()*150)
+            FLOOR(50 + RAND()*150),
+            CONCAT('Local_', i)
         );
         SET i = i + 1;
     END WHILE;
 
     SET i = 1;
 
-    -- 3. Veiculos
+    -- 3️⃣ VEÍCULOS
     WHILE i <= 300 DO
-        INSERT INTO veiculo (veiculo, porcentagem_bateria, status)
+        INSERT INTO tb_veiculo (tipo, codigo_veiculo, nivel_bateria, status, fk_estacionamento)
         VALUES (
-            CONCAT('Veiculo_', i),
-            ROUND(RAND()*100,2),
-            IF(RAND() > 0.5, 'Disponivel', 'Em uso')
+            'Patinete',
+            1000 + i,
+            FLOOR(RAND()*100),
+            'Disponivel',
+            FLOOR(1 + RAND()*50)
         );
         SET i = i + 1;
     END WHILE;
 
     SET i = 1;
 
-    -- 4. Frota
+    -- 4️⃣ FROTA
     WHILE i <= 300 DO
-        INSERT INTO frota (id_estacionamento, id_veiculo)
+        INSERT INTO tb_frota (fk_veiculo, fk_estacionamento)
         VALUES (
-            FLOOR(1 + RAND()*50),
-            i
+            i,
+            FLOOR(1 + RAND()*50)
         );
         SET i = i + 1;
     END WHILE;
 
     SET i = 1;
 
-    -- 5. Tecnicos
+    -- 5️⃣ TÉCNICOS
     WHILE i <= 50 DO
-        INSERT INTO tecnico (nome, CPF, email)
+        INSERT INTO tb_tecnico (nome, cpf, email)
         VALUES (
             CONCAT('Tecnico_', i),
-            FLOOR(10000000000 + RAND()*89999999999),
+            LPAD(i+2000,11,'0'),
             CONCAT('tec', i, '@email.com')
         );
         SET i = i + 1;
@@ -70,11 +89,12 @@ BEGIN
 
     SET i = 1;
 
-    -- 6. Manutenção
+    -- 6️⃣ MANUTENÇÕES
     WHILE i <= 200 DO
-        INSERT INTO manutencao (problema, peca_substituida, id_veiculo, id_tecnico)
+        INSERT INTO tb_manutencao (problema, solucao, peca_substituida, fk_veiculo, fk_tecnico)
         VALUES (
             'Falha elétrica',
+            'Troca de bateria',
             'Bateria',
             FLOOR(1 + RAND()*300),
             FLOOR(1 + RAND()*50)
@@ -84,26 +104,24 @@ BEGIN
 
     SET i = 1;
 
-    -- 7. Viagens
+    -- 7️⃣ VIAGENS
     WHILE i <= 1000 DO
-        INSERT INTO viagem (
-            local_partida,
-            local_chegada,
+        INSERT INTO tb_viagem (
+            fk_local_partida,
+            fk_local_chegada,
             valor_total,
             horario_inicio,
             horario_termino,
             fk_usuario,
-            fk_estacionamento,
-            fk_veiculo
+            fk_frota
         )
         VALUES (
-            CONCAT('Ponto_', FLOOR(RAND()*100)),
-            CONCAT('Destino_', FLOOR(RAND()*100)),
+            FLOOR(1 + RAND()*50),
+            FLOOR(1 + RAND()*50),
             ROUND(RAND()*100,2),
             SEC_TO_TIME(FLOOR(RAND()*86400)),
             SEC_TO_TIME(FLOOR(RAND()*86400)),
             FLOOR(1 + RAND()*1000),
-            FLOOR(1 + RAND()*50),
             FLOOR(1 + RAND()*300)
         );
         SET i = i + 1;
@@ -112,5 +130,3 @@ BEGIN
 END$$
 
 DELIMITER ;
-
-CALL popular_frota();

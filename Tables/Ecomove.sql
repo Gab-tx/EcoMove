@@ -87,4 +87,3 @@ FOREIGN KEY (fk_local_partida) REFERENCES tb_estacionamento(id_estacionamento);
 ALTER TABLE tb_viagem
 ADD CONSTRAINT fk_local_chegada
 FOREIGN KEY (fk_local_chegada) REFERENCES tb_estacionamento(id_estacionamento);
-
